@@ -43,13 +43,26 @@
     center = [NSUserNotificationCenter defaultUserNotificationCenter];
     [center setDelegate:self];
     
-    //Install the helper tool
-    NSError *error = nil;
-	if (![self blessHelperWithLabel:@"org.cirrus.arpsniffer" error:&error]) {
-        NSLog(@"%@",[NSString stringWithFormat:@"Failed to bless helper. Error: %@", error]);
-        exit(1);
+    //Check if helper tool is installed and the helper and gui CFBundleVersion matches
+    NSDictionary* installedHelperJobData = (NSDictionary*)SMJobCopyDictionary(kSMDomainSystemLaunchd, (CFStringRef)@"org.cirrus.arpsniffer" );
+    NSString* installedPath = [[installedHelperJobData objectForKey:@"ProgramArguments"] objectAtIndex:0];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSURL* installedPathURL = [NSURL fileURLWithPath:installedPath];
+    NSDictionary* installedInfoPlist = (NSDictionary*)CFBundleCopyInfoDictionaryForURL((CFURLRef)installedPathURL);
+    NSString* installedBundleVersion = [installedInfoPlist objectForKey:@"CFBundleVersion"];
+    NSString* guiBundleVersion = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
+    if(installedHelperJobData && [fileManager fileExistsAtPath:installedPath] && [guiBundleVersion isEqual:installedBundleVersion]) {
+        NSLog(@"Helper is installed.");
+    } else {
+        //Install the helper tool
+        NSError *error = nil;
+        if (![self blessHelperWithLabel:@"org.cirrus.arpsniffer" error:&error]) {
+            NSLog(@"%@",[NSString stringWithFormat:@"Failed to bless helper. Error: %@", error]);
+            exit(1);
+        }
     }
-    
+    [installedHelperJobData release];
+   
     //Initialize the xpc
     connection = xpc_connection_create_mach_service("org.cirrus.arpsniffer", NULL, XPC_CONNECTION_MACH_SERVICE_PRIVILEGED);
     if (!connection) {
@@ -208,7 +221,7 @@
         //[self stopSniffing];
     }
     if(!sniffing) {
-        watchDog = [[NSTimer scheduledTimerWithTimeInterval:5 target:self selector:@selector(sniffingWatchdog) userInfo:nil repeats:YES] retain];
+        watchDog = [[NSTimer scheduledTimerWithTimeInterval:10 target:self selector:@selector(sniffingWatchdog) userInfo:nil repeats:YES] retain];
         [watchDog autorelease];
         xpc_object_t message = xpc_dictionary_create(NULL, NULL, 0);
         const char* device = [interface cStringUsingEncoding:NSASCIIStringEncoding];
