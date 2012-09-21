@@ -44,6 +44,8 @@
     [center setDelegate:self];
     
     BOOL installHelper = FALSE;
+    BOOL removeHelper = FALSE;
+    
     NSString* installedPath;
     //Check if helper tool is installed and the helper and gui CFBundleVersion matches
     NSDictionary* installedHelperJobData = (NSDictionary*)SMJobCopyDictionary(kSMDomainSystemLaunchd, (CFStringRef)@"org.cirrus.arpsniffer" );
@@ -56,8 +58,10 @@
     if(!installHelper) {
         installedPath = [[installedHelperJobData objectForKey:@"ProgramArguments"] objectAtIndex:0];
         NSFileManager *fileManager = [NSFileManager defaultManager];
+        NSLog(@"Helper path: %@", installedPath);
         if(![fileManager fileExistsAtPath:installedPath]) {
             installHelper = TRUE;
+            removeHelper = TRUE;
             NSLog(@"File does not exist");
         } else {
             NSLog(@"File exists");
@@ -72,10 +76,15 @@
         if(![guiBundleVersion isEqualToString:installedBundleVersion]) {
             NSLog(@"Installed version does not match");
             installHelper = TRUE;
+            removeHelper = TRUE;
         } else {
             NSLog(@"Installed version matches");
         }
         [installedInfoPlist release];
+    }
+    if(removeHelper) {
+        NSLog(@"Removing helper...");
+        [self removeHelper:@"org.cirrus.arpsniffer"];
     }
     if(installHelper) {
         NSLog(@"Installing helper tool");
@@ -187,6 +196,17 @@
     [t autorelease];
 }
 
+-(void) removeHelper:(NSString *)label {
+    AuthorizationItem authItems[2] = {{ kSMRightBlessPrivilegedHelper, 0, NULL, 0 }, { kSMRightModifySystemDaemons, 0, NULL, 0 }};
+	AuthorizationRights authRights = { 2, &authItems };
+    AuthorizationFlags flags = kAuthorizationFlagInteractionAllowed | kAuthorizationFlagPreAuthorize | kAuthorizationFlagExtendRights;
+    AuthorizationRef auth;
+    if( AuthorizationCreate( &authRights, kAuthorizationEmptyEnvironment, flags, &auth ) == errAuthorizationSuccess ) {
+        (void) SMJobRemove( kSMDomainSystemLaunchd, (CFStringRef)label, auth, false, NULL );
+        AuthorizationFree( auth, 0 );
+    }
+}
+
 - (BOOL)blessHelperWithLabel:(NSString *)label error:(NSError **)error {
 	BOOL result = NO;
 	AuthorizationItem authItem		= { kSMRightBlessPrivilegedHelper, 0, NULL, 0 };
@@ -209,6 +229,7 @@
 		 */
 		result = SMJobBless(kSMDomainSystemLaunchd, (CFStringRef)label, authRef, (CFErrorRef *)error);
 	}
+    AuthorizationFree(authRef, 0);
 	return result;
 }
 
