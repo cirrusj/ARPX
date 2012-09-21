@@ -48,13 +48,19 @@
     //Check if helper tool is installed and the helper and gui CFBundleVersion matches
     NSDictionary* installedHelperJobData = (NSDictionary*)SMJobCopyDictionary(kSMDomainSystemLaunchd, (CFStringRef)@"org.cirrus.arpsniffer" );
     if(!installedHelperJobData) {
+        NSLog(@"Helper is not registered.");
         installHelper = TRUE;
+    } else {
+        NSLog(@"Helper is registered.");
     }
     if(!installHelper) {
         installedPath = [[installedHelperJobData objectForKey:@"ProgramArguments"] objectAtIndex:0];
         NSFileManager *fileManager = [NSFileManager defaultManager];
         if(![fileManager fileExistsAtPath:installedPath]) {
             installHelper = TRUE;
+            NSLog(@"File does not exist");
+        } else {
+            NSLog(@"File exists");
         }
     }
     if(!installHelper) {
@@ -62,8 +68,12 @@
         NSDictionary* installedInfoPlist = (NSDictionary*)CFBundleCopyInfoDictionaryForURL((CFURLRef)installedPathURL);
         NSString* installedBundleVersion = [installedInfoPlist objectForKey:@"CFBundleVersion"];
         NSString* guiBundleVersion = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
-        if(![guiBundleVersion isEqual:installedBundleVersion]) {
+        NSLog(@"Helper Version: %@ - GUI Version: %@",installedBundleVersion, guiBundleVersion);
+        if(![guiBundleVersion isEqualToString:installedBundleVersion]) {
+            NSLog(@"Installed version does not match");
             installHelper = TRUE;
+        } else {
+            NSLog(@"Installed version matches");
         }
         [installedInfoPlist release];
     }
