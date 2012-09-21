@@ -47,12 +47,21 @@
     NSDictionary* installedHelperJobData = (NSDictionary*)SMJobCopyDictionary(kSMDomainSystemLaunchd, (CFStringRef)@"org.cirrus.arpsniffer" );
     NSString* installedPath = [[installedHelperJobData objectForKey:@"ProgramArguments"] objectAtIndex:0];
     NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSURL* installedPathURL = [NSURL fileURLWithPath:installedPath];
-    NSDictionary* installedInfoPlist = (NSDictionary*)CFBundleCopyInfoDictionaryForURL((CFURLRef)installedPathURL);
-    NSString* installedBundleVersion = [installedInfoPlist objectForKey:@"CFBundleVersion"];
-    NSString* guiBundleVersion = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
-    if(installedHelperJobData && [fileManager fileExistsAtPath:installedPath] && [guiBundleVersion isEqual:installedBundleVersion]) {
-        NSLog(@"Helper is installed.");
+    if(installedPath) {
+        NSURL* installedPathURL = [NSURL fileURLWithPath:installedPath];
+        NSDictionary* installedInfoPlist = (NSDictionary*)CFBundleCopyInfoDictionaryForURL((CFURLRef)installedPathURL);
+        NSString* installedBundleVersion = [installedInfoPlist objectForKey:@"CFBundleVersion"];
+        NSString* guiBundleVersion = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
+        if([fileManager fileExistsAtPath:installedPath] && [guiBundleVersion isEqual:installedBundleVersion]) {
+            NSLog(@"Helper is installed.");
+        } else {
+            //Install the helper tool
+            NSError *error = nil;
+            if (![self blessHelperWithLabel:@"org.cirrus.arpsniffer" error:&error]) {
+                NSLog(@"%@",[NSString stringWithFormat:@"Failed to bless helper. Error: %@", error]);
+                exit(1);
+            }
+        }
     } else {
         //Install the helper tool
         NSError *error = nil;
@@ -61,6 +70,7 @@
             exit(1);
         }
     }
+
     [installedHelperJobData release];
    
     //Initialize the xpc
