@@ -4,8 +4,6 @@
 <dict>
 	<key>Label</key>
 	<string>org.cirrus.arpsniffer</string>
-	<key>OnDemand</key>
-	<true/>
 	<key>MachServices</key>
 	<dict>
 		<key>org.cirrus.arpsniffer</key>
