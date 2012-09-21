@@ -43,32 +43,39 @@
     center = [NSUserNotificationCenter defaultUserNotificationCenter];
     [center setDelegate:self];
     
+    BOOL installHelper = FALSE;
+    NSString* installedPath;
     //Check if helper tool is installed and the helper and gui CFBundleVersion matches
     NSDictionary* installedHelperJobData = (NSDictionary*)SMJobCopyDictionary(kSMDomainSystemLaunchd, (CFStringRef)@"org.cirrus.arpsniffer" );
-    NSString* installedPath = [[installedHelperJobData objectForKey:@"ProgramArguments"] objectAtIndex:0];
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    if(installedPath) {
+    if(!installedHelperJobData) {
+        installHelper = TRUE;
+    }
+    if(!installHelper) {
+        installedPath = [[installedHelperJobData objectForKey:@"ProgramArguments"] objectAtIndex:0];
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        if(![fileManager fileExistsAtPath:installedPath]) {
+            installHelper = TRUE;
+        }
+    }
+    if(!installHelper) {
         NSURL* installedPathURL = [NSURL fileURLWithPath:installedPath];
         NSDictionary* installedInfoPlist = (NSDictionary*)CFBundleCopyInfoDictionaryForURL((CFURLRef)installedPathURL);
         NSString* installedBundleVersion = [installedInfoPlist objectForKey:@"CFBundleVersion"];
         NSString* guiBundleVersion = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
-        if([fileManager fileExistsAtPath:installedPath] && [guiBundleVersion isEqual:installedBundleVersion]) {
-            NSLog(@"Helper is installed.");
-        } else {
-            //Install the helper tool
-            NSError *error = nil;
-            if (![self blessHelperWithLabel:@"org.cirrus.arpsniffer" error:&error]) {
-                NSLog(@"%@",[NSString stringWithFormat:@"Failed to bless helper. Error: %@", error]);
-                exit(1);
-            }
+        if(![guiBundleVersion isEqual:installedBundleVersion]) {
+            installHelper = TRUE;
         }
-    } else {
-        //Install the helper tool
+        [installedInfoPlist release];
+    }
+    if(installHelper) {
+        NSLog(@"Installing helper tool");
         NSError *error = nil;
         if (![self blessHelperWithLabel:@"org.cirrus.arpsniffer" error:&error]) {
             NSLog(@"%@",[NSString stringWithFormat:@"Failed to bless helper. Error: %@", error]);
             exit(1);
         }
+    } else {
+        NSLog(@"Helper is installed");
     }
 
     [installedHelperJobData release];
