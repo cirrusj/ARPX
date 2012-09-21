@@ -259,7 +259,6 @@
 				AAD4114215D85C65003042F8 /* Frameworks */,
 				AAD4114315D85C65003042F8 /* Resources */,
 				AA7ADF6215EF8A36009891C1 /* CopyFiles */,
-				AA9808FA15F13342000D08EC /* Delete helper tool */,
 			);
 			buildRules = (
 			);
@@ -315,23 +314,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		AA9808FA15F13342000D08EC /* Delete helper tool */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Delete helper tool";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "if [ -a /Library/PrivilegedHelperTools/org.cirrus.arpsniffer ]\nthen\n    sudo rm /Library/PrivilegedHelperTools/org.cirrus.arpsniffer\nfi";
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		AA7ADF4515EF843C009891C1 /* Sources */ = {

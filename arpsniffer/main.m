@@ -53,6 +53,14 @@ void processPacket(u_char *arg, const struct pcap_pkthdr* pkthdr, const u_char *
     return;
 }
 
+static char* isSniffing() {
+    if(thread!=NULL) {
+        return "YES";
+    } else {
+        return "NO";
+    }
+}
+
 static void* captureThread(void* arg)
 {
     @autoreleasepool {
@@ -137,11 +145,13 @@ static void __XPC_Peer_Event_Handler(xpc_connection_t connection, xpc_object_t e
             exit(0);
 		}
 	} else {
+        //Kill was requested
         if(xpc_dictionary_get_string(event, "kill")!=NULL) {
             NSLog(@"Kill event received by controller. Exiting");
             exit(0);
         }
-        
+              
+        //Sniffing start was requested
         if(xpc_dictionary_get_string(event, "start")!=NULL) {
             const char* interface = xpc_dictionary_get_string(event, "start");
             NSLog(@"Start sniffing was requested for interface %s",interface);
@@ -160,6 +170,7 @@ static void __XPC_Peer_Event_Handler(xpc_connection_t connection, xpc_object_t e
                 xpc_connection_send_message(remote, reply);
                 xpc_release(reply);
             }
+        //Sniffing stop was requested
         } else if(xpc_dictionary_get_string(event, "stop")!=NULL) {
             NSLog(@"Stop sniffing was requested");
             if (stop_monitor()==Success) {
@@ -176,6 +187,15 @@ static void __XPC_Peer_Event_Handler(xpc_connection_t connection, xpc_object_t e
                 xpc_release(reply);
                 exit(1);
             }
+        //Status for sniffing was requested
+        } else if(xpc_dictionary_get_string(event,"status")!=NULL) {
+                NSLog(@"Status was requested. Returning %s",isSniffing());
+                xpc_connection_t remote = xpc_dictionary_get_remote_connection(event);
+                xpc_object_t reply = xpc_dictionary_create_reply(event);
+                xpc_dictionary_set_string(reply, "status_reply", isSniffing());
+                xpc_connection_send_message(remote, reply);
+                xpc_release(reply);
+                return;
         } else {
             const char *incoming = xpc_dictionary_get_string(event, "request");
             NSLog(@"Message received from host application: %s",incoming);

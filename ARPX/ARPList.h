@@ -17,10 +17,12 @@
     NSUserNotificationCenter *center;
 }
 
+//Initializers
 - (id) init;
 - (id) initWithVendorData: (VendorViewData*)invendorData withArpTable:(NSTableView*)arpTableView withNotification:(NSUserNotificationCenter*)incenter;
 - (id) initWithDictionary: (NSDictionary*)inarpdata initWithVendorData: (VendorViewData*)invendorData withArpTable:(NSTableView*)inarpTableView withNotification:(NSUserNotificationCenter*)incenter;
 
+//Functionality
 - (BOOL) IPinList: (NSString*)IP;
 - (BOOL) addIP: (NSString*)IP withMAC: (NSString*)mac withHostName: (NSString*)hostname;
 - (BOOL) addIP: (NSString*)IP withMAC: (NSString*)mac;
@@ -38,7 +40,11 @@
 - (BOOL) writeToFile: (NSString*)fileName;
 - (id) getArp;
 
+//TableView
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView;
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex;
+
+//TODO
+- (void)tableView:(NSTableView *)aTableView sortDescriptorsDidChange:(NSArray *)oldDescriptors;
 
 @end

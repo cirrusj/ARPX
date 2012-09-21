@@ -285,6 +285,14 @@
     return NULL;
 }
 
+//TODO
+- (void)tableView:(NSTableView *)aTableView sortDescriptorsDidChange:(NSArray *)oldDescriptors {
+    [arpListing keysSortedByValueUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+        NSLog(@"1: %@ - 2: %@",obj1,obj2);
+        return NSOrderedSame;
+    }];
+}
+
 #pragma mark Notification Center Support
 - (void) notificationWithText:(NSString*)text withTitle:(NSString*)title {
     NSUserNotification *notification = [[NSUserNotification alloc] init];

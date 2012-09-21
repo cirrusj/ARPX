@@ -199,11 +199,17 @@
 }
 
 - (void) startSniffing: (NSString*)interface {
+    if([interface isEqualToString:@""] || !interface) {
+        NSLog(@"Requested to start sniffing, but not interface was provided");
+        return;
+    }
     if(sniffing) {
         NSLog(@"startSniffing was called, but we are already sniffing.");
         //[self stopSniffing];
     }
     if(!sniffing) {
+        watchDog = [[NSTimer scheduledTimerWithTimeInterval:5 target:self selector:@selector(sniffingWatchdog) userInfo:nil repeats:YES] retain];
+        [watchDog autorelease];
         xpc_object_t message = xpc_dictionary_create(NULL, NULL, 0);
         const char* device = [interface cStringUsingEncoding:NSASCIIStringEncoding];
         xpc_dictionary_set_string(message, "start", device);
@@ -237,6 +243,8 @@
                 [black release];
                 sniffing = FALSE;
                 NSLog(@"Sniffing was stopped");
+                [watchDog invalidate];
+                watchDog = nil;
             } else {
                 NSLog(@"Sniffing was not stopped");
             }
@@ -303,9 +311,11 @@ static void networkChange(SCDynamicStoreRef store, CFArrayRef changedKeys, void 
 
 - (void) stopNetworkMonitor {
     enabled = FALSE;
-    CFRunLoopSourceInvalidate(rls);
-    CFRelease(rls);
-    rls = NULL;
+    if(rls!=NULL) {
+        CFRunLoopSourceInvalidate(rls);
+        CFRelease(rls);
+        rls = NULL;
+    }
     NSLog(@"Stopped monitoring...");
 }
 
@@ -338,6 +348,35 @@ static void networkChange(SCDynamicStoreRef store, CFArrayRef changedKeys, void 
     [[NSUserDefaults standardUserDefaults] setObject:[arpdata getArp] forKey:@"ARPData"];
     NSLog(@"Saved %lu entries",[[arpdata getArp] count]);
     [lock unlock];
+}
+
+- (void) sniffingWatchdog {
+    NSLog(@"Requesting status update");
+    xpc_object_t message = xpc_dictionary_create(NULL, NULL, 0);
+    xpc_dictionary_set_string(message, "status", "status");
+    xpc_connection_send_message_with_reply(connection, message, dispatch_get_main_queue(), ^(xpc_object_t event) {
+        const char* response = xpc_dictionary_get_string(event, "status_reply");
+        NSLog(@"%@",[NSString stringWithFormat:@"Received response: %s.", response]);
+        if(strncmp(response,"NO",strlen(response))==0) {
+            sniffing = FALSE;
+            [self stopNetworkMonitor];
+            [enableDisableItem setTitle:@"Enable"];
+            NSLog(@"Monitoring was disabled.");
+            NSImage *black = [[NSImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"fireblack" ofType:@"png"]];
+            [statusItem setImage:black];
+            [black release];
+            [watchDog invalidate];
+            watchDog = nil;
+            CFStringRef title = (CFStringRef)@"ARPX Error";
+            CFStringRef informativeText = (CFStringRef)@"The watchdog detected that sniffing has been stopped";
+            CFOptionFlags options = kCFUserNotificationNoteAlertLevel;
+            CFOptionFlags responseFlags = 0;
+            CFUserNotificationDisplayAlert(0, options, NULL, NULL, NULL,
+                                           title,
+                                           informativeText, NULL,
+                                           NULL,NULL, &responseFlags);
+        }
+    });
 }
 
 //quit the application

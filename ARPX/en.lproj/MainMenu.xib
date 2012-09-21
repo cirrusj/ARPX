@@ -1659,7 +1659,6 @@
 													</object>
 													<int key="NSResizingMask">3</int>
 													<bool key="NSIsResizeable">YES</bool>
-													<bool key="NSIsEditable">YES</bool>
 													<reference key="NSTableView" ref="607885191"/>
 												</object>
 												<object class="NSTableColumn" id="93844970">
@@ -1686,7 +1685,6 @@
 													</object>
 													<int key="NSResizingMask">3</int>
 													<bool key="NSIsResizeable">YES</bool>
-													<bool key="NSIsEditable">YES</bool>
 													<reference key="NSTableView" ref="607885191"/>
 												</object>
 												<object class="NSTableColumn" id="1056889010">
@@ -1716,7 +1714,6 @@
 													</object>
 													<int key="NSResizingMask">3</int>
 													<bool key="NSIsResizeable">YES</bool>
-													<bool key="NSIsEditable">YES</bool>
 													<reference key="NSTableView" ref="607885191"/>
 												</object>
 												<object class="NSTableColumn" id="990566017">
@@ -1746,7 +1743,6 @@
 													</object>
 													<int key="NSResizingMask">3</int>
 													<bool key="NSIsResizeable">YES</bool>
-													<bool key="NSIsEditable">YES</bool>
 													<reference key="NSTableView" ref="607885191"/>
 												</object>
 											</array>

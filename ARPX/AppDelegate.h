@@ -29,6 +29,7 @@
     BOOL enabled;
     CFRunLoopSourceRef rls;
     NSUserNotificationCenter *center;
+    NSTimer *watchDog;
 }
 
 - (IBAction)enableDisable:(id)sender;
